@@ -36,7 +36,6 @@ try:
         for tag in a_tags:  #tag是a标签
             if name in tag['title']:       #判断漫画名是否称在a标签的文本中
                 print("找到了匹配的漫画：", tag['title'])
-                print("漫画链接：", tag['href'])
                 found = True #标记找到匹配的漫画
                 break #跳出内循环
             else:
@@ -49,6 +48,7 @@ try:
 except requests.exceptions.RequestException as e:
     print(f"请求主页时出错：{e}")
     exit()
+
 
 url_child = "https://www.manhuazhan.com" + tag['href']
 print(url_child)
@@ -64,11 +64,10 @@ else:
     print(f"文件夹 {folder_path1} 已存在。")
 #请求漫画所在的子页面
 try:
-            drive = webdriver.Chrome()
-            pyautogui.keyDown('alt')#用来切屏
-            pyautogui.press('tab')
-            pyautogui.keyUp('alt')
-            pyautogui.keyUp('tab')
+            options = webdriver.ChromeOptions()
+            options.add_argument('--headless')
+            options.add_argument('--disable-gpu')
+            drive = webdriver.Chrome(options =options)
             drive.get(url_child)
             child_response = drive.page_source
             child_response.encode('utf-8')
@@ -87,14 +86,14 @@ start_chapter = int(input("请输入要开始爬取的章节："))
 end_chapter = int(input("请输入要结束爬取的章节："))
 start_chapter = start_chapter - 1
 j = end_chapter - start_chapter
-i = -1 #这里的i为计数器，用来控制循环次数
+i = -1      #这里的i为计数器，用来控制循环次数
 folder_path = 'E:/crawler/test'+'/'+tag['title']
 for i in range(j):
     i = i+1
     start_chapter = start_chapter + 1
     folder_name= chapter_a[start_chapter-1].string
     chapter_href = "https://www.manhuazhan.com/"+ chapter_a[start_chapter-1].get("href") #获取章节链接
-    print("这是章节链接：",chapter_href)
+    print("这是chapter_href：",chapter_href)
     folder_path = os.path.join(f'E:/crawler/test'+'/'+tag['title']+'/'+ f'{folder_name}')#创建文件夹以保存章节漫画
     try:
         os.makedirs(folder_path, exist_ok=True)
@@ -103,14 +102,11 @@ for i in range(j):
         print(f"创建文件夹失败: {error}")
         exit()
     # 最大化窗口启动
-    options = webdriver.ChromeOptions()
-    options.add_argument('--start-maximized')
+    options2 = webdriver.ChromeOptions()
+    options2.add_argument('--headless')
+    options2.add_argument('--disable-gpu')
     #启动浏览器滚动获取所有图片
-    drive2 = webdriver.Chrome(options=options)
-    pyautogui.keyDown('alt')#用来切屏
-    pyautogui.press('tab')
-    pyautogui.keyUp('alt')
-    pyautogui.keyUp('tab')
+    drive2 = webdriver.Chrome(options = options2)
     drive2.get(chapter_href)
     last_height = drive2.execute_script("return document.body.scrollHeight")
     #循环滚动，直到到达页面底部为止
@@ -118,7 +114,7 @@ for i in range(j):
         #滚动到页面底部
         drive2.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         #等待一段时间，让页面有机会加载新内容
-        drive2.implicitly_wait(3)  # 等待最多3秒
+        drive2.implicitly_wait(10)  # 等待最多10秒
         #计算新的页面高度
         new_height = drive2.execute_script("return document.body.scrollHeight")
         #如果页面高度没有变化，说明没有加载新内容，退出循环
@@ -154,8 +150,8 @@ for i in range(j):
             except Exception as e:
                 print("爬取失败！原因为：",e)
                 attempts += 1
-                print("正在重试...")
-                print("重试次数：", attempts)
+                print("正在重试...\n")
+                print("重试次数:", attempts)
                 if attempts == max_attempts:
                     print("已达到最大尝试次数，退出循环。该错误话数为：",folder_path[folder_name])
         else:
@@ -165,8 +161,3 @@ for i in range(j):
     else:
         left_chapter = j-i
         print(f"剩余{left_chapter}章节未下载")
-
-
-
-
-
